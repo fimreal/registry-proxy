@@ -1,0 +1,166 @@
+version: '3.3'
+
+services:
+  # caddy reverse proxy service
+  caddy:
+    image: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - registry-proxy
+
+  # docker.io
+  dockerhub:
+    image: registry:2
+    container_name: dockerhub
+    restart: unless-stopped
+    ports:
+      # - "5000:5000"
+    environment:
+      HTTP_PROXY: ${PROXY}
+      HTTPS_PROXY: ${PROXY}
+      NO_PROXY: ${PROXY}
+    volumes:
+      - ./dockerhub:/var/lib/registry
+    command: ["serve", "/var/lib/registry/config.yml"]
+    networks:
+      - registry-proxy
+  dockerhub-ui:
+    image: epurs/registry-ui
+    container_name: k8s-ui
+    restart: unless-stopped
+    ports:
+      # - "5080:80"
+    environment:
+      REGISTRY_HOST: "k8s:5000"
+      REGISTRY_SSL: "false"
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
+    networks:
+      - registry-proxy
+
+  # registry.k8s.io
+  k8s:
+    image: registry:2
+    container_name: k8s
+    restart: unless-stopped
+    ports:
+      # - "5001:5000"
+    environment:
+      HTTP_PROXY: ${PROXY}
+      HTTPS_PROXY: ${PROXY}
+      NO_PROXY: ${PROXY}
+    volumes:
+      - ./k8s:/var/lib/registry
+    command: ["serve", "/var/lib/registry/config.yml"]
+    networks:
+      - registry-proxy
+  k8s-ui:
+    image: epurs/registry-ui
+    container_name: k8s-ui
+    restart: unless-stopped
+    ports:
+      # - "5081:80"
+    environment:
+      REGISTRY_HOST: "k8s:5001"
+      REGISTRY_SSL: "false"
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
+    networks:
+      - registry-proxy
+
+  # quay.io
+  quay:
+    image: registry:2
+    container_name: quay
+    restart: unless-stopped
+    ports:
+      # - "5002:5000"
+    environment:
+      HTTP_PROXY: ${PROXY}
+      HTTPS_PROXY: ${PROXY}
+      NO_PROXY: ${PROXY}
+    volumes:
+      - ./quay:/var/lib/registry
+    command: ["serve", "/var/lib/registry/config.yml"]
+    networks:
+      - registry-proxy
+  quay-ui:
+    image: epurs/registry-ui
+    container_name: quay-ui
+    restart: unless-stopped
+    ports:
+      # - "5082:80"
+    environment:
+      REGISTRY_HOST: "quay:5002"
+      REGISTRY_SSL: "false"
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
+    networks:
+      - registry-proxy
+
+  # ghcr.io
+  ghcr:
+    image: registry:2
+    container_name: ghcr
+    restart: unless-stopped
+    ports:
+      # - "5003:5000"
+    environment:
+      HTTP_PROXY: ${PROXY}
+      HTTPS_PROXY: ${PROXY}
+      NO_PROXY: ${PROXY}
+    volumes:
+      - ./ghcr:/var/lib/registry
+    command: ["serve", "/var/lib/registry/config.yml"]
+    networks:
+      - registry-proxy
+  ghcr-ui:
+    image: epurs/registry-ui
+    container_name: ghcr-ui
+    restart: unless-stopped
+    ports:
+      # - "5083:80"
+    environment:
+      REGISTRY_HOST: "ghcr:5003"
+      REGISTRY_SSL: "false"
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
+    networks:
+      - registry-proxy
+
+  # gcr.io
+  gcr:
+    image: registry:2
+    container_name: gcr
+    restart: unless-stopped
+    ports:
+      # - "5004:5000"
+    environment:
+      HTTP_PROXY: ${PROXY}
+      HTTPS_PROXY: ${PROXY}
+      NO_PROXY: ${PROXY}
+    volumes:
+      - ./gcr:/var/lib/registry
+    command: ["serve", "/var/lib/registry/config.yml"]
+    networks:
+      - registry-proxy
+  gcr-ui:
+    image: epurs/registry-ui
+    container_name: gcr-ui
+    restart: unless-stopped
+    ports:
+      # - "5084:80"
+    environment:
+      REGISTRY_HOST: "gcr:5004"
+      REGISTRY_SSL: "false"
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
+    networks:
+      - registry-proxy
+
+networks:
+  registry-proxy:
+    driver: bridge

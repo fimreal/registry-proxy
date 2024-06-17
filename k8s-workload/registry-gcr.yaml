@@ -1,0 +1,123 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: registry-gcr
+  name: registry-gcr
+  namespace: registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: registry-gcr
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: registry-gcr
+        tier: registry
+    spec:
+    # tolerations:
+    #   - key: unstable
+    #     effect: NoSchedule
+      containers:
+      - name: registry
+        image: registry:2
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+          name: registry
+        env:
+        - name: HTTP_PROXY
+          value: ""
+        - name: HTTPS_PROXY
+          value: ""
+        - name: NO_PROXY
+          value: "localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+        - name: REGISTRY_PROXY_REMOTEURL
+          value: "https://k8s.gcr.io"
+        - name: REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY
+          value: "/var/lib/registry"
+        - name: REGISTRY_STORAGE_DELETE_ENABLED
+          value: "true"
+        - name: REGISTRY_HTTP_HEADERS_ACCESS-CONTROL-ALLOW-ORIGIN
+          value: "['*']"
+        - name: REGISTRY_HTTP_HEADERS_ACCESS-CONTROL-ALLOW-METHOD
+          value: "['HEAD', 'GET', 'OPTIONS', 'DELETE']"
+        - name: REGISTRY_HTTP_HEADERS_ACCESS-CONTROL-ALLOW-HEADERS
+          value: "['Authorization', 'Accept', 'Cache-Control']"
+        - name: REGISTRY_HTTP_HEADERS_ACCESS-CONTROL-EXPOSE-HEADERS
+          value: "['Docker-Content-Digest']"
+        resources:
+          # 低使用率内存占用不超过 100Mi
+          limits:
+            cpu: 1
+            memory: 300Mi
+          requests:
+            cpu: 200m
+            memory: 100Mi
+      - name: registry-ui
+        image: epurs/registry-ui
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: registry-ui
+        env:
+        - name: REGISTRY_HOST
+          value: "registry-gcr:5000"
+        - name: REGISTRY_SSL
+          value: "false"
+        - name: REGISTRY_STORAGE_DELETE_ENABLED
+          value: "true"
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+          requests:
+            cpu: 10m
+            memory: 50Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry-gcr
+  namespace: registry
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5000
+      targetPort: 5000
+      name: registry
+    - port: 80
+      targetPort: 80
+      name: registry-ui
+  selector:
+    app: registry-gcr
+---
+# ---------------  ing -------------- ##
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: registry-gcr
+  namespace: registry
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "gcr.epurs.com"
+    http:
+      paths:
+      - path: /v2/
+        pathType: Prefix
+        backend:
+          service:
+            name: registry-gcr
+            port:
+              number: 5000
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: registry-gcr
+            port:
+              number: 80

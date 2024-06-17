@@ -1,0 +1,36 @@
+# tls {
+#     dns dnspod {env.DNSPOD_TOKEN}
+# }
+
+(auth) {
+	# basicauth {
+	# 	user password
+	# }
+}
+
+dockerhub.epurs.com {
+    import auth
+    reverse_proxy / http://dockerhub-ui:80
+    reverse_proxy /v2/* http://dockerhub:5000 
+}
+
+k8sr.epurs.com {
+    import auth
+    reverse_proxy / http://k8s-ui:80
+    reverse_proxy /v2/* http://k8s:5000
+}
+quay.epurs.com {
+    import auth
+    reverse_proxy / http://quay-ui:80
+    reverse_proxy /v2/* http://quay:5000
+}
+ghcr.epurs.com {
+    import auth
+    reverse_proxy / http://ghcr-ui:80
+    reverse_proxy /v2/* http://ghcr:5000
+}
+gcr.epurs.com {
+    import auth
+    reverse_proxy / http://gcr-ui:80
+    reverse_proxy /v2/* http://gcr:5000
+}

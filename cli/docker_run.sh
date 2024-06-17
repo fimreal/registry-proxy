@@ -13,7 +13,7 @@ network_name="registry-proxy"
 # name remote_address listen_port listen_ui_port
 # myregistry https://remote.registry.io 5000 80
 proxy_dict=(
-    "k8sr https://registry.k8s.io 5000 5080"
+    "k8s https://registry.k8s.io 5000 5080"
     "gcr https://k8s.gcr.io 5001 5081"
     "quay https://quay.io 5002 5082"
     "dockerhub https://registry.docker.io 5003 5083"

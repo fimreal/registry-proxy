@@ -1,0 +1,23 @@
+version: 0.1
+log:
+  fields:
+    service: registry
+storage:
+  filesystem:
+    rootdirectory: /var/lib/registry
+http:
+  addr: :5000
+  headers:
+    Access-Control-Allow-Origin: ['*']
+    Access-Control-Allow-Methods: ['HEAD', 'GET', 'OPTIONS', 'DELETE']
+    Access-Control-Allow-Headers: ['Authorization', 'Accept', 'Cache-Control', 'Docker-Content-Digest']
+    Access-Control-Expose-Headers: ['Docker-Content-Digest']
+proxy:
+  remoteurl: https://gcr.io
+  username: # Optional: Add if authentication is required
+  password: # Optional: Add if authentication is required
+health:
+  storagedriver:
+    enabled: true
+    interval: 10s
+    threshold: 3
