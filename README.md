@@ -8,7 +8,7 @@
 git clone
 
 ```bash
-git clone https://github.com/epurs/registry-proxy.git
+git clone https://github.com/fimreal/registry-proxy.git
 ```
 
 (1) docker run
